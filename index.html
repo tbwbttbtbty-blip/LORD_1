@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LORD AI — العقل الحقيقي</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0f;
+            color: #f0f0f5;
+            font-family: 'Cairo', Tahoma, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ====== سايدبار ====== */
+        .sidebar {
+            width: 270px;
+            background: #0f0f18;
+            border-left: 1px solid #1a1a2e;
+            padding: 20px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sidebar h2 {
+            font-size: 18px;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #1a1a2e;
+        }
+        .sidebar h2 span { color: #7c3aed; }
+
+        .sidebar button {
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .sidebar button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+        }
+
+        .conv-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .conv-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #a0a0c0;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+        .conv-item:hover {
+            background: #1a1a2e;
+            color: #f0f0f5;
+        }
+        .conv-item.active {
+            background: rgba(124,58,237,0.15);
+            color: #a78bfa;
+            border-color: #7c3aed;
+        }
+
+        /* ====== رئيسي ====== */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            border-bottom: 1px solid #1a1a2e;
+            background: #0f0f18;
+        }
+        .header .status { color: #7a7a95; font-size: 13px; }
+
+        /* ====== شات ====== */
+        .chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease;
+        }
+        .message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .message.ai { align-self: flex-start; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .user .avatar { background: linear-gradient(135deg,#7c3aed,#5b21b6); color: #fff; }
+        .ai .avatar { background: linear-gradient(135deg,#7c3aed,#a855f7); color: #fff; }
+
+        .bubble {
+            padding: 12px 18px;
+            border-radius: 14px;
+            font-size: 15px;
+            line-height: 1.8;
+            word-wrap: break-word;
+        }
+        .user .bubble {
+            background: linear-gradient(135deg,#7c3aed,#5b21b6);
+            color: #fff;
+            border-bottom-left-radius: 4px;
+        }
+        .ai .bubble {
+            background: #1a1a2e;
+            color: #e0e0ec;
+            border: 1px solid #2a2a42;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bubble code {
+            background: rgba(124,58,237,0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            direction: ltr;
+            display: inline-block;
+        }
+        .bubble pre {
+            background: #00000030;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+            margin: 8px 0;
+        }
+
+        .typing {
+            display: flex;
+            gap: 5px;
+            padding: 12px 18px;
+            background: #1a1a2e;
+            border: 1px solid #2a2a42;
+            border-radius: 14px;
+            align-self: flex-start;
+        }
+        .typing span {
+            width: 8px; height: 8px;
+            background: #5a5a75;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%,60%,100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        /* ====== إدخال ====== */
+        .input-area {
+            padding: 16px 24px;
+            background: #0f0f18;
+            border-top: 1px solid #1a1a2e;
+        }
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            background: #1a1a2e;
+            border: 2px solid #2a2a42;
+            border-radius: 12px;
+            padding: 8px 12px;
+            max-width: 800px;
+            margin: 0 auto;
+            transition: 0.3s;
+        }
+        .input-wrapper:focus-within {
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 4px rgba(124,58,237,0.15);
+        }
+        .input-wrapper textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #f0f0f5;
+            font-size: 15px;
+            resize: none;
+            max-height: 100px;
+            min-height: 24px;
+            line-height: 1.6;
+            font-family: inherit;
+        }
+        .input-wrapper button {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg,#7c3aed,#5b21b6);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+        .input-wrapper button:hover { transform: scale(1.05); }
+        .input-wrapper button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .input-wrapper button:disabled:hover { transform: none; }
+
+        .footer-text {
+            text-align: center;
+            font-size: 11px;
+            color: #5a5a75;
+            margin-top: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .message { max-width: 100%; }
+            .chat { padding: 12px; }
+            .input-area { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ====== سايدبار ====== -->
+<div class="sidebar">
+    <h2>⚡ <span>LORD</span> AI</h2>
+    <button onclick="newChat()">➕ محادثة جديدة</button>
+    <div class="conv-list" id="convList">
+        <div class="conv-item active" onclick="switchConv(this)" data-id="1">💬 المحادثة الحالية</div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#5a5a75;padding-top:8px;border-top:1px solid #1a1a2e;">
+        👑 عبدالله (LORD) — 19 سنة
+    </div>
+</div>
+
+<!-- ====== رئيسي ====== -->
+<div class="main">
+    <div class="header">
+        <div class="status" id="status">جاهز 🟢</div>
+        <div style="font-size:13px;color:#7a7a95;">LORD AI · <span id="msgCount">0 رسائل</span></div>
+    </div>
+
+    <div class="chat" id="chatContainer"></div>
+
+    <div class="input-area">
+        <div class="input-wrapper">
+            <textarea id="chatInput" rows="1" placeholder="اكتب رسالتك..." oninput="autoResize(this)"></textarea>
+            <button onclick="sendMessage()" id="sendBtn">➤</button>
+        </div>
+        <div class="footer-text">Enter = إرسال · Shift+Enter = سطر جديد</div>
+    </div>
+</div>
+
+<script>
+// ==================== الحالة ====================
+const STATE = {
+    conversations: [{ id: 1, name: 'المحادثة الحالية', messages: [] }],
+    currentConvId: 1,
+    convCounter: 1,
+    isProcessing: false,
+};
+
+// ==================== المراجع ====================
+const DOM = {
+    chat: document.getElementById('chatContainer'),
+    input: document.getElementById('chatInput'),
+    sendBtn: document.getElementById('sendBtn'),
+    convList: document.getElementById('convList'),
+    status: document.getElementById('status'),
+    msgCount: document.getElementById('msgCount'),
+};
+
+// ==================== أدوات ====================
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function scrollDown() {
+    setTimeout(() => { DOM.chat.scrollTop = DOM.chat.scrollHeight; }, 50);
+}
+
+function getTime() {
+    const d = new Date();
+    return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+}
+
+// ==================== المحادثات ====================
+function renderConvs() {
+    DOM.convList.innerHTML = '';
+    STATE.conversations.forEach(c => {
+        const div = document.createElement('div');
+        div.className = `conv-item${c.id === STATE.currentConvId ? ' active' : ''}`;
+        div.textContent = `💬 ${c.name}`;
+        div.onclick = () => switchConv(c.id);
+        div.dataset.id = c.id;
+        DOM.convList.appendChild(div);
+    });
+}
+
+function switchConv(id) {
+    STATE.currentConvId = id;
+    renderConvs();
+    loadMessages();
+}
+
+function getConv() {
+    return STATE.conversations.find(c => c.id === STATE.currentConvId) || STATE.conversations[0];
+}
+
+function newChat() {
+    STATE.convCounter++;
+    const conv = { id: STATE.convCounter, name: `محادثة ${STATE.convCounter}`, messages: [] };
+    STATE.conversations.push(conv);
+    STATE.currentConvId = conv.id;
+    renderConvs();
+    DOM.chat.innerHTML = '<div style="text-align:center;padding:40px;color:#7a7a95;">📝 اكتب رسالتك الأولى</div>';
+    DOM.input.value = '';
+    DOM.input.focus();
+    DOM.msgCount.textContent = '0 رسائل';
+}
+
+// ==================== الرسائل ====================
+function addMessage(text, role) {
+    const conv = getConv();
+    conv.messages.push({ text, role, time: getTime() });
+
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    div.innerHTML = `
+        <div class="avatar">${role === 'user' ? 'U' : 'L'}</div>
+        <div>
+            <div class="bubble">${formatText(text)}</div>
+            <div style="font-size:10px;color:#5a5a75;margin-top:2px;padding:0 4px;">${getTime()}</div>
+        </div>
+    `;
+    DOM.chat.appendChild(div);
+    scrollDown();
+
+    DOM.msgCount.textContent = `${conv.messages.length} رسائل`;
+}
+
+function loadMessages() {
+    DOM.chat.innerHTML = '';
+    const conv = getConv();
+    if (conv.messages.length === 0) {
+        DOM.chat.innerHTML = '<div style="text-align:center;padding:40px;color:#7a7a95;">📝 اكتب رسالتك الأولى</div>';
+        return;
+    }
+    conv.messages.forEach(m => {
+        const div = document.createElement('div');
+        div.className = `message ${m.role}`;
+        div.innerHTML = `
+            <div class="avatar">${m.role === 'user' ? 'U' : 'L'}</div>
+            <div>
+                <div class="bubble">${formatText(m.text)}</div>
+                <div style="font-size:10px;color:#5a5a75;margin-top:2px;padding:0 4px;">${m.time}</div>
+            </div>
+        `;
+        DOM.chat.appendChild(div);
+    });
+    scrollDown();
+}
+
+function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'typing';
+    div.id = 'typingIndicator';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    DOM.chat.appendChild(div);
+    scrollDown();
+}
+
+function hideTyping() {
+    const el = document.getElementById('typingIndicator');
+    if (el) el.remove();
+}
+
+function formatText(text) {
+    // كود
+    text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+        return `<pre><code>${code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`;
+    });
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // عريض
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // مائل
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // سطور
+    text = text.replace(/\n/g, '<br>');
+    return text;
+}
+
+// ==================== الإرسال ====================
+function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+}
+
+async function sendMessage() {
+    const text = DOM.input.value.trim();
+    if (!text || STATE.isProcessing) return;
+
+    // إزالة رسالة الترحيب
+    const welcome = DOM.chat.querySelector('div[style*="text-align:center"]');
+    if (welcome) welcome.remove();
+
+    addMessage(text, 'user');
+    DOM.input.value = '';
+    autoResize(DOM.input);
+    STATE.isProcessing = true;
+    DOM.sendBtn.disabled = true;
+    DOM.status.textContent = 'جارٍ التفكير... 🤔';
+    showTyping();
+
+    try {
+        const formData = new FormData();
+        formData.append('message', text);
+        formData.append('conversation_id', STATE.currentConvId);
+
+        const res = await fetch('api.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await res.json();
+        hideTyping();
+
+        if (data.reply) {
+            addMessage(data.reply, 'ai');
+        } else {
+            addMessage('❌ حدث خطأ في الاستجابة', 'ai');
+        }
+    } catch (err) {
+        hideTyping();
+        addMessage('❌ فشل الاتصال بالخادم. تأكد من تشغيل الخادم.', 'ai');
+    }
+
+    STATE.isProcessing = false;
+    DOM.sendBtn.disabled = false;
+    DOM.status.textContent = 'جاهز 🟢';
+}
+
+// ==================== تشغيل ====================
+document.addEventListener('DOMContentLoaded', () => {
+    DOM.input.addEventListener('keydown', handleKey);
+    renderConvs();
+    loadMessages();
+    DOM.input.focus();
+});
+</script>
+</body>
+</html>
